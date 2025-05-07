@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sales Call Notes Tracker</title>
+</head>
+<body>
+    <h1>Upcoming Sales Calls</h1>
+
+    {% if events %}
+        <ul>
+        {% for event in events %}
+            <li>
+                <strong>{{ event.title }}</strong><br>
+                Start Time: {{ event.start }}<br>
+                <details>
+                    <summary>View Generated Notes</summary>
+                    <pre>{{ event.notes }}</pre>
+                </details>
+            </li>
+            <hr>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No matching events found!</p>
+    {% endif %}
+
+    <form action="/generate-notes" method="get">
+        <button type="submit">Apply Notes to Calendar</button>
+    </form>
+</body>
+</html>
