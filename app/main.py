@@ -1,15 +1,22 @@
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, Request, UploadFile, File
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from app.calendar_utils import get_upcoming_events, update_event_with_notes
+from google_auth_oauthlib.flow import InstalledAppFlow
+from app.calendar_utils import get_upcoming_events
 from app.note_generator import generate_notes
 from app.calendar_utils import create_note_event
+import os
+
+SCOPES = ['https://www.googleapis.com/auth/calendar']
 
 app = FastAPI()
 templates = Jinja2Templates(directory="app/templates")
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
+    if not os.path.exists("token.json"):
+        return RedirectResponse("/auth")
+
     events = get_upcoming_events()
     processed_events = []
 
@@ -28,6 +35,29 @@ async def home(request: Request):
         "request": request,
         "events": processed_events
     })
+
+
+@app.get("/auth", response_class=HTMLResponse)
+def auth_form(request: Request):
+    return templates.TemplateResponse(
+        "upload_credentials.html",
+        {"request": request}
+    )
+
+
+@app.post("/auth")
+async def auth_upload(file: UploadFile = File(...)):
+    contents = await file.read()
+    with open("credentials.json", "wb") as f:
+        f.write(contents)
+
+    flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
+    creds = flow.run_local_server(port=7568)
+
+    with open("token.json", "w") as token:
+        token.write(creds.to_json())
+
+    return RedirectResponse("/", status_code=303)
 
 @app.get("/generate-notes")
 def generate_notes_for_sales_calls():
