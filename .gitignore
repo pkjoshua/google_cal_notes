@@ -1,3 +1,5 @@
 node_modules/
 .env
 .json
+git-filter-repo.txt
+__pycache__/
